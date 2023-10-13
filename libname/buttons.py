@@ -99,7 +99,7 @@ SELECTED_STATE = "selected_state"
 PASSIVE_STATE = "passive_state"
 
 
-class Button:
+class BaseButton:
     def __init__(self,
                  texture: pygame.Surface,
                  commands: tuple[typing.Callable, ...] | typing.Callable,
@@ -190,7 +190,7 @@ class Button:
                     command()
 
 
-class FunctionalButton:
+class Button:
     def __init__(self):
         pass
 
@@ -198,7 +198,7 @@ class FunctionalButton:
 class ButtonArrangement:
     def __init__(self,
                  shape: tuple[int, int],
-                 buttons: tuple[Button, ...],
+                 buttons: tuple[BaseButton, ...],
                  arrangement_pointers: tuple[str, ...] | None,
                  initial_button_size: int,
                  button_padding_size: int = 15,
@@ -372,7 +372,7 @@ class ButtonArrangement:
     def set_all_active(self):
         self.passive_button = [False, ] * len(self.passive_button)
 
-    def get_button_at_index(self, index: int) -> Button | None:
+    def get_button_at_index(self, index: int) -> BaseButton | None:
         if index >= len(self.buttons):
             return None
         return self.buttons[index]
@@ -461,7 +461,7 @@ class ButtonBox:
     def add_button_arrangement(self,
                                name: str,
                                arrangement_shape: tuple[int, int],
-                               buttons: tuple[Button, ...],
+                               buttons: tuple[BaseButton, ...],
                                arrangement_pointers: tuple[str | None, ...] | None = None,
                                passive_buttons: tuple[bool, ...] = None):
         """
@@ -524,7 +524,7 @@ class ButtonBox:
         index = button_position[0] + button_position[1] * self.arrangement_shape[0]
         return index if index < len(self.current_button_arrangement.buttons) else None
 
-    def logic(self, events: list[pygame.Event, ...] | tuple[pygame.Event, ...], position: tuple):
+    def run_logic(self, events: list[pygame.Event, ...] | tuple[pygame.Event, ...], position: tuple):
         """
         method to input the users mouse inputs in form of the associated pygame events
         :param events: list or tuple of events to be handled (MOUSEMOTION, MOUSEBUTTONDOWN and MOUSEBUTTONUP event types
@@ -823,13 +823,13 @@ class EmbeddedButtonBox(ButtonBox):
         return (parent_size[0] + self.outline_width * 2 + self.left_padding + self.right_padding,
                 parent_size[1] + self.outline_width * 2 + self.top_padding + self.down_padding + self.top_offset)
 
-    def logic(self, events: list[pygame.Event, ...] | tuple[pygame.Event, ...], position: tuple):
+    def run_logic(self, events: list[pygame.Event, ...] | tuple[pygame.Event, ...], position: tuple):
         """
         calls parents logic method with modified position
         :param events: events to be handled
         :param position: position of the EmbeddedButtonBox
         """
-        super().logic(events, self._get_position_with_outline_width(position))
+        super().run_logic(events, self._get_position_with_outline_width(position))
 
     def _draw_additional_padding(self, surface: pygame.Surface,
                                  position: tuple[int, int],
@@ -936,13 +936,13 @@ if __name__ == "__main__":
                                                                                      colour=(150, 150, 150),
                                                                                      corner_radius_percentage=0.1))
     pas_appearance = ButtonAppearance(alpha=150, grayscale=True)
-    test_button = Button(pygame.image.load("git.png").convert_alpha(),
-                         commands=lambda a, b: print(f":^) {a + b}"),
-                         args=("halihalo", " here am I"),
-                         pressed_appearance=p_appearance,
-                         hovered_appearance=h_appearance,
-                         selected_appearance=s_appearance,
-                         passive_appearance=pas_appearance)
+    test_button = BaseButton(pygame.image.load("git.png").convert_alpha(),
+                             commands=lambda a, b: print(f":^) {a + b}"),
+                             args=("halihalo", " here am I"),
+                             pressed_appearance=p_appearance,
+                             hovered_appearance=h_appearance,
+                             selected_appearance=s_appearance,
+                             passive_appearance=pas_appearance)
 
     TUERKIS = (64, 214, 218)
     LIGHT_GRAY = (200, 200, 200)
@@ -984,7 +984,7 @@ if __name__ == "__main__":
                 exit()
 
         start = time.perf_counter()
-        test_box.logic(events, (100, 100))
+        test_box.run_logic(events, (100, 100))
         test_box.blit_if_necessary(window, (100, 100))
         end = time.perf_counter()
         timings.append((end - start) * 60)
